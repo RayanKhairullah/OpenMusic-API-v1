@@ -6,7 +6,9 @@ class PlaylistActivitiesService {
     this._pool = new Pool();
   }
 
-  async addActivity({ playlistId, songId, userId, action }) {
+  async addActivity({
+    playlistId, songId, userId, action,
+  }) {
     const id = `activity-${nanoid(16)}`;
     const time = new Date().toISOString();
 

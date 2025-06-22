@@ -9,7 +9,7 @@ module.exports = {
     const collaborationsHandler = new CollaborationsHandler(
       collaborationsService,
       playlistsService, // Penting: collaborations handler juga butuh playlistsService
-      validator
+      validator,
     );
     server.route(routes(collaborationsHandler));
   },

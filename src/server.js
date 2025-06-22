@@ -17,7 +17,7 @@ const UserValidator = require('./validator/users');
 const AuthenticationValidator = require('./validator/authentications'); // Import ini
 const AlbumValidator = require('./validator/albums');
 const SongValidator = require('./validator/songs');
-const PlaylistsValidator = require('./validator/playlists')
+const PlaylistsValidator = require('./validator/playlists');
 const CollaborationsValidator = require('./validator/collaborations');
 
 // Import API plugins
@@ -41,8 +41,7 @@ const init = async () => {
   const songsService = new SongsService();
   const collaborationsService = new CollaborationsService();
   const playlistActivitiesService = new PlaylistActivitiesService();
-  const playlistsService = new PlaylistsService(collaborationsService, playlistActivitiesService); 
-
+  const playlistsService = new PlaylistsService(collaborationsService, playlistActivitiesService);
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -79,20 +78,20 @@ const init = async () => {
         }
         // Pastikan 401 dan 403 dari JWT atau Hapi juga tertangani
         if (response.output.statusCode === 401) {
-            const newResponse = h.response({
-                status: 'fail',
-                message: 'Autentikasi gagal', // Pesan umum untuk 401 dari Boom/JWT
-            });
-            newResponse.code(401);
-            return newResponse;
+          const newResponse = h.response({
+            status: 'fail',
+            message: 'Autentikasi gagal', // Pesan umum untuk 401 dari Boom/JWT
+          });
+          newResponse.code(401);
+          return newResponse;
         }
-         if (response.output.statusCode === 403) {
-            const newResponse = h.response({
-                status: 'fail',
-                message: 'Anda tidak berhak mengakses resource ini', // Pesan umum untuk 403 dari Boom
-            });
-            newResponse.code(403);
-            return newResponse;
+        if (response.output.statusCode === 403) {
+          const newResponse = h.response({
+            status: 'fail',
+            message: 'Anda tidak berhak mengakses resource ini', // Pesan umum untuk 403 dari Boom
+          });
+          newResponse.code(403);
+          return newResponse;
         }
       }
 
@@ -108,7 +107,6 @@ const init = async () => {
 
     return h.continue;
   });
-
 
   // Mendaftarkan plugin JWT
   await server.register([
@@ -126,15 +124,15 @@ const init = async () => {
       sub: false,
       maxAgeSec: process.env.ACCESS_TOKEN_AGE, // Kriteria 1: Access Token Age
     },
-    validate: (artifacts) => {
+    validate: (artifacts) =>
       // Kriteria 1: JWT token harus mengandung payload berisi userId
-      return {
+      ({
         isValid: true,
         credentials: {
           userId: artifacts.decoded.payload.userId, // Menyimpan userId di credentials
         },
-      };
-    },
+      })
+    ,
   });
 
   await server.register([
@@ -177,8 +175,8 @@ const init = async () => {
     {
       plugin: collaborations,
       options: {
-        collaborationsService: collaborationsService, // <--- Gunakan instance yang sudah diinisialisasi
-        playlistsService: playlistsService, // <--- Gunakan instance yang sudah diinisialisasi
+        collaborationsService, // <--- Gunakan instance yang sudah diinisialisasi
+        playlistsService, // <--- Gunakan instance yang sudah diinisialisasi
         validator: CollaborationsValidator,
       },
     },

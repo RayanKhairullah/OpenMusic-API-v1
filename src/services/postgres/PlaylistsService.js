@@ -87,8 +87,8 @@ class PlaylistsService {
     }
 
     const query = {
-        text: 'INSERT INTO playlist_songs VALUES($1, $2, $3) RETURNING id',
-        values: [id, playlistId, songId],
+      text: 'INSERT INTO playlist_songs VALUES($1, $2, $3) RETURNING id',
+      values: [id, playlistId, songId],
     };
 
     const result = await this._pool.query(query);
@@ -97,10 +97,10 @@ class PlaylistsService {
       throw new InvariantError('Lagu gagal ditambahkan ke playlist');
     }
     await this._playlistActivitiesService.addActivity({
-        playlistId,
-        songId,
-        userId,
-        action: 'add',
+      playlistId,
+      songId,
+      userId,
+      action: 'add',
     });
   }
 
@@ -118,28 +118,28 @@ class PlaylistsService {
   }
 
   async getPlaylistById(id) {
-  const query = {
-    text: `
+    const query = {
+      text: `
       SELECT playlists.id, playlists.name, users.username
       FROM playlists
       JOIN users ON users.id = playlists.owner
       WHERE playlists.id = $1
     `,
-    values: [id],
-  };
+      values: [id],
+    };
 
-  const result = await this._pool.query(query);
-  if (!result.rows.length) {
-    throw new NotFoundError('Playlist tidak ditemukan');
-  }
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      throw new NotFoundError('Playlist tidak ditemukan');
+    }
 
-  return result.rows[0];
+    return result.rows[0];
   }
 
   async deleteSongFromPlaylist(playlistId, songId, userId) {
     const query = {
-        text: 'DELETE FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2 RETURNING id',
-        values: [playlistId, songId],
+      text: 'DELETE FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2 RETURNING id',
+      values: [playlistId, songId],
     };
 
     const result = await this._pool.query(query);
@@ -149,10 +149,10 @@ class PlaylistsService {
     }
 
     await this._playlistActivitiesService.addActivity({
-        playlistId,
-        songId,
-        userId,
-        action: 'delete',
+      playlistId,
+      songId,
+      userId,
+      action: 'delete',
     });
   }
 
@@ -187,6 +187,7 @@ class PlaylistsService {
       }
     }
   }
+
   async getPlaylistActivities(playlistId) {
     return this._playlistActivitiesService.getActivities(playlistId);
   }
