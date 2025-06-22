@@ -17,8 +17,6 @@
 - [Menjalankan Aplikasi](#menjalankan-aplikasi)
 - [Struktur Proyek](#struktur-proyek)
 - [Dokumentasi API Endpoints](#dokumentasi-api-endpoints)
-  - [Albums](#albums)
-  - [Songs](#songs)
 - [Penanganan Error](#penanganan-error)
 - [Linter dan Konsistensi Kode](#linter-dan-konsistensi-kode)
 - [Tips Pengembangan](#tips-pengembangan)
@@ -91,6 +89,11 @@ PGPASSWORD=postgres
 PGDATABASE=openmusic
 PGHOST=localhost
 PGPORT=5432
+
+ACCESS_TOKEN_KEY=your_super_secret_access_key_here_make_it_long_and_random
+REFRESH_TOKEN_KEY=your_another_super_secret_refresh_key_here_also_long_and_random
+ACCESS_TOKEN_AGE=1800
+REFRESH_TOKEN_AGE=2592000
 ```
 
 > 🛑 Jangan upload file `.env` ke GitHub. Tambahkan `.env` ke `.gitignore`.
@@ -138,10 +141,18 @@ OpenMusic-API-v1/
 │   │   │   ├── index.js    # Plugin Hapi untuk modul albums
 │   │   │   ├── routes.js   # Definisi rute Hapi
 │   │   └── songs/          # Struktur serupa untuk fitur songs
+│   │   └── authentications/          # Struktur serupa untuk fitur songs
+│   │   └── users/          # Struktur serupa untuk fitur songs
+│   │   └── colaborations/          # Struktur serupa untuk fitur songs
+│   │   └── playlists/          # Struktur serupa untuk fitur songs
 │   ├── services/           # Logika interaksi dengan database
 │   │   ├── postgres/
 │   │   │   ├── AlbumsService.js # Kelas service untuk Albums
 │   │   │   └── SongsService.js  # Kelas service untuk Songs
+│   │   │   ├── AuthenticationsService.js # Kelas service untuk authentications
+│   │   │   └── CollaborationsService.js  # Kelas service untuk collborations
+│   │   │   ├── UsersService.js # Kelas service untuk users
+│   │   │   └── PlaylistsService.js  # Kelas service untuk playlists
 │   ├── utils/              # Fungsi-fungsi utility, seperti mapping data dari DB ke model
 │   │   └── index.js
 │   ├── exceptions/         # Custom error classes (ClientError, NotFoundError, dll.)
@@ -149,14 +160,28 @@ OpenMusic-API-v1/
 │   │   ├── InvariantError.js
 │   │   ├── NotFoundError.js
 │   │   └── ValidationError.js
+│   │   ├── AuthenticationError.js
+│   │   └── AuthorizationError.js
 │   ├── server.js           # Titik masuk utama aplikasi (setup server Hapi)
 │   └── validator/          # Skema Joi untuk validasi
 │       ├── albums/
 │       │   └── schema.js
 │       │   └── index.js
 │       └── songs/
-│           └── schema.js
-│           └── index.js
+        │    └── schema.js
+        │    └── index.js
+        ├── users/
+        │   └── schema.js
+        │   └── index.js
+        └── authentications/
+        │   └── schema.js
+        │   └── index.js
+        ├── playlists/
+        │   └── schema.js
+        │   └── index.js
+        └── collaborations/
+            └── schema.js
+            └── index.js
 ├── migrations/             # File migrasi database node-pg-migrate
 ├── .env                    # Environment variables (private)
 ├── .gitignore
