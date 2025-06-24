@@ -1,47 +1,58 @@
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
-const Jwt = require('@hapi/jwt'); // Pastikan ini terimport
+const Inert = require('@hapi/inert');
+const Jwt = require('@hapi/jwt');
+const path = require('path');
 
 // Import services
 const UsersService = require('./services/postgres/UsersService');
-const AuthenticationsService = require('./services/postgres/AuthenticationsService'); // Import ini
+const AuthenticationsService = require('./services/postgres/AuthenticationsService');
 const AlbumsService = require('./services/postgres/AlbumsService');
 const SongsService = require('./services/postgres/SongsService');
 const PlaylistsService = require('./services/postgres/PlaylistsService');
 const CollaborationsService = require('./services/postgres/CollaborationsService');
 const PlaylistActivitiesService = require('./services/postgres/PlaylistActivitiesService');
+const ProducerService = require('./services/rabbitmq/producer');
+const AlbumsLikesService = require('./services/postgres/AlbumsLikesService');
+const CacheService = require('./services/redis/CacheService');
 
 // Import validators
 const UserValidator = require('./validator/users');
-const AuthenticationValidator = require('./validator/authentications'); // Import ini
+const AuthenticationValidator = require('./validator/authentications');
 const AlbumValidator = require('./validator/albums');
 const SongValidator = require('./validator/songs');
 const PlaylistsValidator = require('./validator/playlists');
 const CollaborationsValidator = require('./validator/collaborations');
+const ExportsValidator = require('./validator/exports');
 
 // Import API plugins
 const users = require('./api/users');
-const authentications = require('./api/authentications'); // Import ini
+const authentications = require('./api/authentications');
 const albums = require('./api/albums');
 const songs = require('./api/songs');
 const playlists = require('./api/playlists');
 const collaborations = require('./api/collaborations');
+const exportsPlugin = require('./api/exports');
+const albumLikes = require('./api/albums/likes');
 
 // Import custom errors
 const ClientError = require('./exceptions/ClientError');
+// eslint-disable-next-line no-unused-vars
 const AuthenticationError = require('./exceptions/AuthenticationError');
-const AuthorizationError = require('./exceptions/AuthorizationError'); // Import ini
+// eslint-disable-next-line no-unused-vars
+const AuthorizationError = require('./exceptions/AuthorizationError');
 
 const init = async () => {
-  // Inisialisasi services
+  const cacheService = new CacheService();
   const usersService = new UsersService();
-  const authenticationsService = new AuthenticationsService(); // Inisialisasi ini
+  const authenticationsService = new AuthenticationsService();
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
   const collaborationsService = new CollaborationsService();
   const playlistActivitiesService = new PlaylistActivitiesService();
   const playlistsService = new PlaylistsService(collaborationsService, playlistActivitiesService);
+  const albumsLikesService = new AlbumsLikesService(cacheService);
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -53,85 +64,78 @@ const init = async () => {
     },
   });
 
-  // Kriteria 5: Penanganan Eror (Error Handling) - Meminimalisir boilerplate code dengan onPreResponse
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
 
     if (response instanceof Error) {
-      if (response instanceof ClientError) {
-        const newResponse = h.response({
-          status: 'fail',
-          message: response.message,
-        });
-        newResponse.code(response.statusCode);
-        return newResponse;
-      }
-
       if (response.isBoom) {
-        if (response.output.statusCode === 404) {
-          const newResponse = h.response({
+        const { statusCode } = response.output;
+
+        if (statusCode === 413) {
+          return h.response({
+            status: 'fail',
+            message: 'Ukuran file terlalu besar, maksimal 512KB',
+          }).code(413);
+        }
+
+        if (statusCode === 404) {
+          return h.response({
             status: 'fail',
             message: 'Resource tidak ditemukan',
-          });
-          newResponse.code(404);
-          return newResponse;
+          }).code(404);
         }
-        // Pastikan 401 dan 403 dari JWT atau Hapi juga tertangani
-        if (response.output.statusCode === 401) {
-          const newResponse = h.response({
+
+        if (statusCode === 401) {
+          return h.response({
             status: 'fail',
-            message: 'Autentikasi gagal', // Pesan umum untuk 401 dari Boom/JWT
-          });
-          newResponse.code(401);
-          return newResponse;
+            message: 'Autentikasi gagal',
+          }).code(401);
         }
-        if (response.output.statusCode === 403) {
-          const newResponse = h.response({
+
+        if (statusCode === 403) {
+          return h.response({
             status: 'fail',
-            message: 'Anda tidak berhak mengakses resource ini', // Pesan umum untuk 403 dari Boom
-          });
-          newResponse.code(403);
-          return newResponse;
+            message: 'Anda tidak berhak mengakses resource ini',
+          }).code(403);
         }
       }
 
-      // Penanganan server error (error lain yang tidak tertangkap di atas)
-      const newResponse = h.response({
+      if (response instanceof ClientError) {
+        return h.response({
+          status: 'fail',
+          message: response.message,
+        }).code(response.statusCode);
+      }
+
+      console.error('[UNHANDLED ERROR]', response);
+      return h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
-      });
-      newResponse.code(500);
-      console.error(response); // Logging error asli untuk debugging
-      return newResponse;
+      }).code(500);
     }
 
     return h.continue;
   });
 
-  // Mendaftarkan plugin JWT
   await server.register([
-    {
-      plugin: Jwt,
-    },
+    Jwt,
+    Inert,
   ]);
 
-  // Mendefinisikan strategi autentikasi "openmusic_jwt"
   server.auth.strategy('openmusic_jwt', 'jwt', {
-    keys: process.env.ACCESS_TOKEN_KEY, // Kriteria 1: ACCESS_TOKEN_KEY dari env
+    keys: process.env.ACCESS_TOKEN_KEY,
     verify: {
       aud: false,
       iss: false,
       sub: false,
-      maxAgeSec: process.env.ACCESS_TOKEN_AGE, // Kriteria 1: Access Token Age
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
     },
-    validate: (artifacts) =>
-      // Kriteria 1: JWT token harus mengandung payload berisi userId
-      ({
-        isValid: true,
-        credentials: {
-          userId: artifacts.decoded.payload.userId, // Menyimpan userId di credentials
-        },
-      })
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        userId: artifacts.decoded.payload.userId,
+      },
+    })
     ,
   });
 
@@ -144,9 +148,9 @@ const init = async () => {
       },
     },
     {
-      plugin: authentications, // Daftarkan plugin authentications
+      plugin: authentications,
       options: {
-        authenticationsService, // Pass service dan validator
+        authenticationsService,
         usersService,
         validator: AuthenticationValidator,
       },
@@ -168,19 +172,46 @@ const init = async () => {
     {
       plugin: playlists,
       options: {
-        service: playlistsService, // <--- Gunakan instance yang sudah diinisialisasi
+        service: playlistsService,
         validator: PlaylistsValidator,
       },
     },
     {
       plugin: collaborations,
       options: {
-        collaborationsService, // <--- Gunakan instance yang sudah diinisialisasi
-        playlistsService, // <--- Gunakan instance yang sudah diinisialisasi
+        collaborationsService,
+        playlistsService,
         validator: CollaborationsValidator,
       },
     },
+    {
+      plugin: exportsPlugin,
+      options: {
+        service: ProducerService,
+        playlistsService,
+        validator: ExportsValidator,
+      },
+    },
+    {
+      plugin: albumLikes,
+      options: {
+        albumsLikesService,
+        albumsService,
+        cacheService,
+      },
+    },
   ]);
+
+  server.route({
+    method: 'GET',
+    path: '/upload/images/{param*}',
+    handler: {
+      directory: {
+        path: path.resolve(__dirname, '../public/images'),
+        listing: false,
+      },
+    },
+  });
 
   await server.start();
   console.log(`Server berjalan pada ${server.info.uri}`);

@@ -19,16 +19,15 @@ exports.up = (pgm) => {
       notNull: true,
     },
     action: {
-      type: 'TEXT', // Bisa 'add' atau 'delete'
+      type: 'TEXT',
       notNull: true,
     },
     time: {
-      type: 'TEXT', // timestamp
+      type: 'TEXT',
       notNull: true,
     },
   });
 
-  // Tambahkan foreign key constraint ke tabel playlists
   pgm.addConstraint('playlist_song_activities', 'fk_playlist_song_activities.playlist_id_playlists.id', {
     foreignKeys: {
       columns: 'playlist_id',
@@ -37,7 +36,6 @@ exports.up = (pgm) => {
     },
   });
 
-  // Tambahkan foreign key constraint ke tabel songs
   pgm.addConstraint('playlist_song_activities', 'fk_playlist_song_activities.song_id_songs.id', {
     foreignKeys: {
       columns: 'song_id',
@@ -46,7 +44,6 @@ exports.up = (pgm) => {
     },
   });
 
-  // Tambahkan foreign key constraint ke tabel users
   pgm.addConstraint('playlist_song_activities', 'fk_playlist_song_activities.user_id_users.id', {
     foreignKeys: {
       columns: 'user_id',

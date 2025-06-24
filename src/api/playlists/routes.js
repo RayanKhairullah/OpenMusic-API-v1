@@ -1,11 +1,10 @@
-// src/api/playlists/routes.js
 const routes = (handler) => [
   {
     method: 'POST',
     path: '/playlists',
     handler: handler.postPlaylistHandler,
     options: {
-      auth: 'openmusic_jwt', // Pastikan autentikasi diterapkan
+      auth: 'openmusic_jwt',
     },
   },
   {
@@ -24,7 +23,6 @@ const routes = (handler) => [
       auth: 'openmusic_jwt',
     },
   },
-  // Rute untuk playlist songs
   {
     method: 'POST',
     path: '/playlists/{id}/songs',

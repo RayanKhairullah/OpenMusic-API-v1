@@ -1,6 +1,5 @@
-// src/api/authentications/handler.js
 const autoBind = require('auto-bind');
-const Jwt = require('@hapi/jwt'); // Pastikan ini sudah diinstal: npm install @hapi/jwt
+const Jwt = require('@hapi/jwt');
 
 class AuthenticationsHandler {
   constructor(authenticationsService, usersService, validator) {
@@ -25,10 +24,10 @@ class AuthenticationsHandler {
     const refreshToken = Jwt.token.generate(
       { userId: id },
       process.env.REFRESH_TOKEN_KEY,
-      { expiresIn: process.env.REFRESH_TOKEN_AGE }, // Kriteria 1: Refresh Token Age
+      { expiresIn: process.env.REFRESH_TOKEN_AGE },
     );
 
-    await this._authenticationsService.addRefreshToken(refreshToken); // Kriteria 1: Refresh token terdaftar di database
+    await this._authenticationsService.addRefreshToken(refreshToken);
 
     const response = h.response({
       status: 'success',
@@ -42,13 +41,13 @@ class AuthenticationsHandler {
     return response;
   }
 
-  async putAuthenticationHandler(request, h) {
+  async putAuthenticationHandler(request) {
     this._validator.validatePutAuthenticationPayload(request.payload);
 
     const { refreshToken } = request.payload;
 
-    await this._authenticationsService.verifyRefreshToken(refreshToken); // Kriteria 1: Refresh token signature benar dan terdaftar
-    const { userId } = Jwt.token.decode(refreshToken).decoded.payload; // Mengambil userId dari refresh token
+    await this._authenticationsService.verifyRefreshToken(refreshToken);
+    const { userId } = Jwt.token.decode(refreshToken).decoded.payload;
 
     const accessToken = Jwt.token.generate(
       { userId },
@@ -65,12 +64,12 @@ class AuthenticationsHandler {
     };
   }
 
-  async deleteAuthenticationHandler(request, h) {
+  async deleteAuthenticationHandler(request) {
     this._validator.validateDeleteAuthenticationPayload(request.payload);
 
     const { refreshToken } = request.payload;
-    await this._authenticationsService.verifyRefreshToken(refreshToken); // Kriteria 1: Refresh token signature benar dan terdaftar
-    await this._authenticationsService.deleteRefreshToken(refreshToken); // Kriteria 1: Hapus autentikasi dari database
+    await this._authenticationsService.verifyRefreshToken(refreshToken);
+    await this._authenticationsService.deleteRefreshToken(refreshToken);
 
     return {
       status: 'success',

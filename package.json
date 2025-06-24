@@ -8,21 +8,29 @@
     "start:prod": "NODE_ENV=production node ./src/server.js",
     "start:dev": "nodemon ./src/server.js",
     "lint": "eslint . --fix",
-    "migrate": "node-pg-migrate --envPath ./.env"
+    "migrate": "node-pg-migrate --envPath ./.env",
+    "migrate:up": "node-pg-migrate up --envPath .env",
+    "migrate:reset": "node-pg-migrate down --count ALL --envPath .env",
+    "consumer": "node src/services/queue/consumer.js"
   },
   "keywords": [],
   "author": "rayankhairullah-alrafy",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
     "@hapi/hapi": "^21.0.0",
+    "@hapi/inert": "^7.1.0",
     "@hapi/jwt": "^3.2.0",
+    "amqplib": "^0.10.8",
     "auto-bind": "^4.0.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^16.5.0",
     "joi": "^17.13.3",
     "nanoid": "^5.1.5",
-    "pg": "^8.16.2"
+    "nodemailer": "^7.0.3",
+    "pg": "^8.16.2",
+    "redis": "^5.5.6"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

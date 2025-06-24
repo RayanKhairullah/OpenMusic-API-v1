@@ -1,6 +1,5 @@
-// src/validator/playlists/index.js
 const InvariantError = require('../../exceptions/InvariantError');
-const { PlaylistPayloadSchema, PlaylistSongPayloadSchema } = require('./schema'); // Akan kita buat file schema.js
+const { PlaylistPayloadSchema, PlaylistSongPayloadSchema } = require('./schema');
 
 const PlaylistsValidator = {
   validatePlaylistPayload: (payload) => {

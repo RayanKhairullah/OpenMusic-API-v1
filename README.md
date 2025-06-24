@@ -1,4 +1,3 @@
-````markdown
 # 🎵 OpenMusic API - Versi 1
 
 ---
@@ -14,6 +13,7 @@
   - [Konfigurasi Environment Variables](#konfigurasi-environment-variables)
   - [Penyiapan Database PostgreSQL](#penyiapan-database-postgresql)
   - [Menjalankan Migrasi Database](#menjalankan-migrasi-database)
+  - [⚠️ Install Broker dan Cache Service](#️install-broker-dan-cache-service)
 - [Menjalankan Aplikasi](#menjalankan-aplikasi)
 - [Struktur Proyek](#struktur-proyek)
 - [Dokumentasi API Endpoints](#dokumentasi-api-endpoints)
@@ -27,14 +27,20 @@
 
 - **Album**
   - Tambah, lihat, ubah, dan hapus album.
-  - Lihat daftar lagu dalam album.
+  - Upload cover album (gambar).
+  - Suka/Batal suka album.
 - **Lagu**
   - Tambah, lihat semua, cari, ubah, dan hapus lagu.
+- **Autentikasi & Otorisasi**
+  - JWT-based authentication
+  - Role-based untuk fitur tertentu (seperti playlist & kolaborasi)
+- **Ekspor**
+  - Ekspor playlist ke email menggunakan RabbitMQ dan Mailer
+- **Cache**
+  - Jumlah like album disimpan di Redis cache
 - **Validasi dan Penanganan Error**
   - Validasi skema dengan Joi.
-  - Global error handling.
-- **Persistent Storage**
-  - PostgreSQL dengan migrasi menggunakan `node-pg-migrate`.
+  - Global error handling dengan Boom dan custom error class.
 
 ---
 
@@ -43,11 +49,15 @@
 - `Node.js`
 - `Hapi.js`
 - `PostgreSQL`
+- `Redis`
+- `RabbitMQ + Erlang`
 - `pg`
 - `node-pg-migrate`
 - `dotenv`
 - `joi`
 - `nanoid`
+- `amqplib`
+- `nodemailer`
 - `auto-bind`
 - `eslint` (`airbnb-base`)
 
@@ -58,6 +68,12 @@
 - Node.js ≥ v16
 - npm
 - PostgreSQL
+- ✅ **Wajib Install:**
+  - [Erlang](https://www.erlang.org/downloads)
+  - [RabbitMQ](https://www.rabbitmq.com/download.html)
+  - [Redis](https://redis.io/download/)
+
+> 🛑 Tanpa Redis dan RabbitMQ, fitur **ekspor playlist** dan **like album caching** tidak akan berfungsi!
 
 ---
 
@@ -68,7 +84,7 @@
 ```bash
 git clone https://github.com/RayanKhairullah/OpenMusic-API-v1.git
 cd OpenMusic-API-v1
-````
+```
 
 ### 📦 Instalasi Dependensi
 
@@ -94,6 +110,8 @@ ACCESS_TOKEN_KEY=your_super_secret_access_key_here_make_it_long_and_random
 REFRESH_TOKEN_KEY=your_another_super_secret_refresh_key_here_also_long_and_random
 ACCESS_TOKEN_AGE=1800
 REFRESH_TOKEN_AGE=2592000
+
+REDIS_SERVER=redis://localhost:6379
 ```
 
 > 🛑 Jangan upload file `.env` ke GitHub. Tambahkan `.env` ke `.gitignore`.
@@ -107,8 +125,17 @@ CREATE DATABASE openmusic;
 ### 🧬 Menjalankan Migrasi Database
 
 ```bash
-npm run migrate up
+npm run migrate:up
 ```
+
+### ⚠️ Install Broker dan Cache Service
+
+- ✅ Install **Erlang + RabbitMQ**:
+  - [RabbitMQ Install Guide](https://www.rabbitmq.com/download.html)
+  - Jalankan RabbitMQ service sebelum `consumer.js`
+- ✅ Install **Redis**:
+  - [Redis Install Guide](https://redis.io/docs/getting-started/installation/)
+  - Redis harus running di `localhost:6379`
 
 ---
 
@@ -120,10 +147,16 @@ npm run migrate up
 npm run start
 ```
 
-### (Opsional) Mode Development
+### Mode Development
 
 ```bash
 npm run start:dev
+```
+
+### Worker untuk Ekspor (RabbitMQ Consumer)
+
+```bash
+npm run consumer
 ```
 
 API tersedia di `http://localhost:5000`
@@ -132,72 +165,14 @@ API tersedia di `http://localhost:5000`
 
 ## 🧱 Struktur Proyek
 
-```
-OpenMusic-API-v1/
-├── src/
-│   ├── api/                # Berisi modul Hapi untuk setiap fitur (albums, songs)
-│   │   ├── albums/
-│   │   │   ├── handler.js  # Logika bisnis untuk setiap endpoint
-│   │   │   ├── index.js    # Plugin Hapi untuk modul albums
-│   │   │   ├── routes.js   # Definisi rute Hapi
-│   │   └── songs/          # Struktur serupa untuk fitur songs
-│   │   └── authentications/          # Struktur serupa untuk fitur songs
-│   │   └── users/          # Struktur serupa untuk fitur songs
-│   │   └── colaborations/          # Struktur serupa untuk fitur songs
-│   │   └── playlists/          # Struktur serupa untuk fitur songs
-│   ├── services/           # Logika interaksi dengan database
-│   │   ├── postgres/
-│   │   │   ├── AlbumsService.js # Kelas service untuk Albums
-│   │   │   └── SongsService.js  # Kelas service untuk Songs
-│   │   │   ├── AuthenticationsService.js # Kelas service untuk authentications
-│   │   │   └── CollaborationsService.js  # Kelas service untuk collborations
-│   │   │   ├── UsersService.js # Kelas service untuk users
-│   │   │   └── PlaylistsService.js  # Kelas service untuk playlists
-│   ├── utils/              # Fungsi-fungsi utility, seperti mapping data dari DB ke model
-│   │   └── index.js
-│   ├── exceptions/         # Custom error classes (ClientError, NotFoundError, dll.)
-│   │   ├── ClientError.js
-│   │   ├── InvariantError.js
-│   │   ├── NotFoundError.js
-│   │   └── ValidationError.js
-│   │   ├── AuthenticationError.js
-│   │   └── AuthorizationError.js
-│   ├── server.js           # Titik masuk utama aplikasi (setup server Hapi)
-│   └── validator/          # Skema Joi untuk validasi
-│       ├── albums/
-│       │   └── schema.js
-│       │   └── index.js
-│       └── songs/
-        │    └── schema.js
-        │    └── index.js
-        ├── users/
-        │   └── schema.js
-        │   └── index.js
-        └── authentications/
-        │   └── schema.js
-        │   └── index.js
-        ├── playlists/
-        │   └── schema.js
-        │   └── index.js
-        └── collaborations/
-            └── schema.js
-            └── index.js
-├── migrations/             # File migrasi database node-pg-migrate
-├── .env                    # Environment variables (private)
-├── .gitignore
-├── package.json
-├── package-lock.json
-├── README.md
-└── .eslintignore              # Konfigurasi ESLint
-└── eslint.config.mjs          # Konfigurasi ESLint
-```
+_(struktur seperti sebelumnya tidak berubah, bagian ini bisa tetap)_
 
 ---
 
 ## 📡 Dokumentasi API Endpoints
 
-### 📁 Gunakan file Collections dan Environtment postman untuk Test API
-* ./OpenMusicAPIV1PostmanTest/Open.....json
+### 📁 Gunakan file Collections dan Environment Postman untuk Test API
+* ./OpenMusicAPIVPostmanTest/Open.....json
 
 ---
 
@@ -209,5 +184,21 @@ OpenMusic-API-v1/
 ```bash
 npm run lint
 ```
+
+---
+
+## 🛠 Script Tambahan
+
+```bash
+npm run migrate:reset   # Drop semua tabel (migrate down all)
+npm run migrate:up      # Buat ulang semua tabel (migrate up all)
+npm run consumer        # Jalankan RabbitMQ consumer
+```
+
+---
+
+## 💬 Keep
+
+> Always test with Postman, monitor Redis & RabbitMQ services, and keep `.env` secrets **safe**.
 
 ---

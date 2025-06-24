@@ -1,4 +1,3 @@
-// src/services/postgres/AuthenticationsService.js
 const { Pool } = require('pg');
 const InvariantError = require('../../exceptions/InvariantError');
 

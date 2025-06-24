@@ -1,4 +1,3 @@
-// src/validator/users/index.js
 const { UserPayloadSchema } = require('./schema');
 const InvariantError = require('../../exceptions/InvariantError');
 

@@ -1,4 +1,3 @@
-// src/services/postgres/CollaborationsService.js
 const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/InvariantError');
@@ -10,7 +9,6 @@ class CollaborationsService {
   }
 
   async addCollaboration(playlistId, userId) {
-    // Memastikan userId ada
     const checkUserQuery = {
       text: 'SELECT id FROM users WHERE id = $1',
       values: [userId],
@@ -20,7 +18,6 @@ class CollaborationsService {
       throw new NotFoundError('User tidak ditemukan');
     }
 
-    // Memastikan playlistId ada
     const checkPlaylistQuery = {
       text: 'SELECT id FROM playlists WHERE id = $1',
       values: [playlistId],

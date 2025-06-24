@@ -1,4 +1,3 @@
-// src/validator/authentications/index.js
 const {
   PostAuthenticationPayloadSchema,
   PutAuthenticationPayloadSchema,

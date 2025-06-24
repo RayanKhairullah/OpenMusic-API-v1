@@ -1,4 +1,3 @@
-// src/api/collaborations/index.js
 const CollaborationsHandler = require('./handler');
 const routes = require('./routes');
 
@@ -8,7 +7,7 @@ module.exports = {
   register: async (server, { collaborationsService, playlistsService, validator }) => {
     const collaborationsHandler = new CollaborationsHandler(
       collaborationsService,
-      playlistsService, // Penting: collaborations handler juga butuh playlistsService
+      playlistsService,
       validator,
     );
     server.route(routes(collaborationsHandler));

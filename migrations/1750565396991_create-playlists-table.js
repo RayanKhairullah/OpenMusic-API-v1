@@ -24,12 +24,11 @@ exports.up = (pgm) => {
     },
   });
 
-  // Tambahkan foreign key constraint ke tabel users
   pgm.addConstraint('playlists', 'fk_playlists.owner_users.id', {
     foreignKeys: {
       columns: 'owner',
       references: 'users(id)',
-      onDelete: 'CASCADE', // Jika user dihapus, playlists-nya juga dihapus
+      onDelete: 'CASCADE',
     },
   });
 };

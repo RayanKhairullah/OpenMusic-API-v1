@@ -76,7 +76,6 @@ class PlaylistsService {
       throw new NotFoundError('Lagu tidak ditemukan');
     }
 
-    // Memastikan tidak ada duplikasi lagu di playlist
     const checkDuplicateQuery = {
       text: 'SELECT id FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2',
       values: [playlistId, songId],
@@ -178,12 +177,12 @@ class PlaylistsService {
       await this.verifyPlaylistOwner(playlistId, userId);
     } catch (error) {
       if (error instanceof NotFoundError) {
-        throw error; // Jika playlist tidak ditemukan, langsung throw
+        throw error;
       }
       try {
         await this._collaborationService.verifyCollaborator(playlistId, userId);
       } catch {
-        throw error; // Jika bukan owner dan bukan collaborator, throw error original (AuthorizationError dari verifyPlaylistOwner)
+        throw error;
       }
     }
   }

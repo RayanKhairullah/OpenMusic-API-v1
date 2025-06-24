@@ -1,4 +1,3 @@
-// src/api/authentications/routes.js
 const routes = (handler) => [
   {
     method: 'POST',

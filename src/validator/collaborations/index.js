@@ -1,6 +1,5 @@
-// src/validator/collaborations/index.js
 const InvariantError = require('../../exceptions/InvariantError');
-const CollaborationPayloadSchema = require('./schema'); // Akan kita buat file schema.js
+const CollaborationPayloadSchema = require('./schema');
 
 const CollaborationsValidator = {
   validateCollaborationPayload: (payload) => {

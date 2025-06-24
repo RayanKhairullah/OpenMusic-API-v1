@@ -1,4 +1,3 @@
-// src/api/users/handler.js
 const autoBind = require('auto-bind');
 
 class UsersHandler {
@@ -6,7 +5,7 @@ class UsersHandler {
     this._service = service;
     this._validator = validator;
 
-    autoBind(this); // Mengikat semua method agar `this` selalu merujuk ke instance class
+    autoBind(this);
   }
 
   async postUserHandler(request, h) {

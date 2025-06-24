@@ -1,4 +1,3 @@
-// src/api/authentications/index.js
 const AuthenticationsHandler = require('./handler');
 const routes = require('./routes');
 

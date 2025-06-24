@@ -1,4 +1,3 @@
-// src/validator/authentications/schema.js
 const Joi = require('joi');
 
 const PostAuthenticationPayloadSchema = Joi.object({

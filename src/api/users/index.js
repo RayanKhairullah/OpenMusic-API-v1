@@ -1,4 +1,3 @@
-// src/api/users/index.js
 const UsersHandler = require('./handler');
 const routes = require('./routes');
 

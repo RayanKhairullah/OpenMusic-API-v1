@@ -2,7 +2,7 @@ const ClientError = require('./ClientError');
 
 class ValidationError extends ClientError {
   constructor(message) {
-    super(message, 400); // Validation errors are typically Bad Request (400)
+    super(message, 400);
     this.name = 'ValidationError';
   }
 }

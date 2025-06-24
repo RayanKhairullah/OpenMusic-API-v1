@@ -1,4 +1,3 @@
-// src/validator/users/schema.js
 const Joi = require('joi');
 
 const UserPayloadSchema = Joi.object({

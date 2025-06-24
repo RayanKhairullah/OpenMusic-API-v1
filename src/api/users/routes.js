@@ -1,4 +1,3 @@
-// src/api/users/routes.js
 const routes = (handler) => [
   {
     method: 'POST',

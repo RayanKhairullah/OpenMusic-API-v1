@@ -1,9 +1,8 @@
-// src/services/postgres/UsersService.js
 const { Pool } = require('pg');
-const { nanoid } = require('nanoid'); // Pastikan nanoid versi 5.x.x atau yang terbaru
+const { nanoid } = require('nanoid');
 const bcrypt = require('bcrypt');
 const InvariantError = require('../../exceptions/InvariantError');
-const AuthenticationError = require('../../exceptions/AuthenticationError'); // Pastikan Anda sudah membuat ini
+const AuthenticationError = require('../../exceptions/AuthenticationError');
 
 class UsersService {
   constructor() {
@@ -11,7 +10,6 @@ class UsersService {
   }
 
   async addUser({ username, password, fullname }) {
-    // Memverifikasi username tidak duplikat
     await this.verifyUsername(username);
 
     // Hashing password
@@ -62,7 +60,7 @@ class UsersService {
       throw new AuthenticationError('Kredensial yang Anda berikan salah');
     }
 
-    return id; // Mengembalikan ID user jika kredensial valid
+    return id;
   }
 
   async getUserById(id) {
@@ -73,6 +71,7 @@ class UsersService {
     const result = await this._pool.query(query);
 
     if (!result.rows.length) {
+      // eslint-disable-next-line no-undef
       throw new NotFoundError('User tidak ditemukan');
     }
 

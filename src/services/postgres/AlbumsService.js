@@ -12,8 +12,8 @@ class AlbumsService {
   async addAlbum({ name, year }) {
     const id = `album-${nanoid(16)}`;
     const query = {
-      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
-      values: [id, name, year],
+      text: 'INSERT INTO albums VALUES($1, $2, $3, $4) RETURNING id',
+      values: [id, name, year, null],
     };
 
     const result = await this._pool.query(query);
@@ -27,7 +27,7 @@ class AlbumsService {
 
   async getAlbumById(id) {
     const query = {
-      text: 'SELECT id, name, year FROM albums WHERE id = $1',
+      text: 'SELECT id, name, year, cover FROM albums WHERE id = $1',
       values: [id],
     };
     const result = await this._pool.query(query);
@@ -36,12 +36,16 @@ class AlbumsService {
       throw new NotFoundError('Album tidak ditemukan');
     }
 
+    const album = mapAlbumDBToModel(result.rows[0]);
+    album.coverUrl = album.cover
+      ? `${process.env.HOST.includes('localhost') ? 'http' : 'https'}://${process.env.HOST}:${process.env.PORT}/upload/images/${album.cover}`
+      : null;
+
     const songsQuery = {
       text: 'SELECT id, title, performer FROM songs WHERE album_id = $1',
       values: [id],
     };
     const songsResult = await this._pool.query(songsQuery);
-    const album = mapAlbumDBToModel(result.rows[0]);
     album.songs = songsResult.rows;
 
     return album;
@@ -57,6 +61,18 @@ class AlbumsService {
 
     if (!result.rows.length) {
       throw new NotFoundError('Gagal memperbarui album. Id tidak ditemukan');
+    }
+  }
+
+  async updateAlbumCover(albumId, coverUrl) {
+    const query = {
+      text: 'UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id',
+      values: [coverUrl, albumId],
+    };
+
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      throw new NotFoundError('Gagal memperbarui sampul album. Id tidak ditemukan');
     }
   }
 

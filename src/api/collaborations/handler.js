@@ -1,13 +1,11 @@
-// src/api/collaborations/handler.js
 const ClientError = require('../../exceptions/ClientError');
 
 class CollaborationsHandler {
   constructor(collaborationsService, playlistsService, validator) {
     this._collaborationsService = collaborationsService;
-    this._playlistsService = playlistsService; // Penting untuk validasi playlist ownership
+    this._playlistsService = playlistsService;
     this._validator = validator;
 
-    // Binding methods
     this.postCollaborationHandler = this.postCollaborationHandler.bind(this);
     this.deleteCollaborationHandler = this.deleteCollaborationHandler.bind(this);
   }
@@ -18,8 +16,8 @@ class CollaborationsHandler {
       const { playlistId, userId } = request.payload;
       const { userId: credentialId } = request.auth.credentials;
 
-      // Pastikan user yang menambah kolaborator adalah pemilik playlist
       await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+      // eslint-disable-next-line max-len
       const collaborationId = await this._collaborationsService.addCollaboration(playlistId, userId);
 
       const response = h.response({
@@ -40,7 +38,6 @@ class CollaborationsHandler {
         response.code(error.statusCode);
         return response;
       }
-      // Server Error
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',
@@ -57,7 +54,6 @@ class CollaborationsHandler {
       const { playlistId, userId } = request.payload;
       const { userId: credentialId } = request.auth.credentials;
 
-      // Pastikan user yang menghapus kolaborator adalah pemilik playlist
       await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
       await this._collaborationsService.deleteCollaboration(playlistId, userId);
 
@@ -74,7 +70,6 @@ class CollaborationsHandler {
         response.code(error.statusCode);
         return response;
       }
-      // Server Error
       const response = h.response({
         status: 'error',
         message: 'Maaf, terjadi kegagalan pada server kami.',

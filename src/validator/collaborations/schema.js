@@ -1,4 +1,3 @@
-// src/validator/collaborations/schema.js
 const Joi = require('joi');
 
 const CollaborationPayloadSchema = Joi.object({
